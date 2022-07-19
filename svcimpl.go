@@ -217,9 +217,10 @@ func (r RabidaImpl) CrawlWithListeners(ctx context.Context, job Job, callback fu
 			chromedp.Flag("force-color-profile", "srgb"),
 			chromedp.Flag("metrics-recording-only", true),
 			chromedp.Flag("safebrowsing-disable-auto-update", true),
-			chromedp.Flag("enable-automation", true),
+			chromedp.Flag("enable-automation", false),
 			chromedp.Flag("password-store", "basic"),
 			chromedp.Flag("use-mock-keychain", true),
+			chromedp.Flag("disable-infobars", true),
 			chromedp.Flag("ignore-certificate-errors", "1"),
 		}
 		var userAgent string
@@ -698,11 +699,19 @@ func (r RabidaImpl) populate(ctx context.Context, father *cdp.Node, cssSelector 
 		defer nodeCancel()
 		if father != nil {
 			if err := chromedp.Run(timeoutCtx, chromedp.Nodes(scope, &nodes, chromedp.ByQueryAll, chromedp.FromNode(father))); err != nil {
-				logrus.Error(fmt.Sprintf("scope err: %+v", errors.Wrap(ErrNotFound, scope)))
+				if r.conf.PanicOnScopeErr {
+					panic(err)
+				} else {
+					logrus.Error(fmt.Sprintf("scope err: %+v", errors.Wrap(ErrNotFound, scope)))
+				}
 			}
 		} else {
 			if err := chromedp.Run(timeoutCtx, chromedp.Nodes(scope, &nodes, chromedp.ByQueryAll)); err != nil {
-				logrus.Error(fmt.Sprintf("scope err: %+v", errors.Wrap(ErrNotFound, scope)))
+				if r.conf.PanicOnScopeErr {
+					panic(err)
+				} else {
+					logrus.Error(fmt.Sprintf("scope err: %+v", errors.Wrap(ErrNotFound, scope)))
+				}
 			}
 		}
 	} else {
@@ -870,6 +879,9 @@ func (r RabidaImpl) extract(ctx context.Context, job Job, pageNo int, conf confi
 	DelaySleep(conf, "populate")
 
 	p := r.paginator(job, pageNo)
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithTimeout(ctx, conf.Timeout)
+	defer cancel()
 	if stringutils.IsNotEmpty(job.CssSelector.XpathScope) || stringutils.IsNotEmpty(job.CssSelector.Xpath) {
 		doc := r.Html(ctx, father, conf)
 		ret = r.populateX(ctx, job.CssSelector, conf, doc)

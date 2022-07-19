@@ -12,6 +12,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cast v1.3.0
-	github.com/unionj-cloud/go-doudou v1.0.5
+	github.com/unionj-cloud/go-doudou v1.2.1-0.20220718061359-5d40f302039d
 	golang.org/x/net v0.0.0-20220325170049-de3da57026de
 )

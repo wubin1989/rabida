@@ -695,8 +695,8 @@ func (r RabidaImpl) populate(ctx context.Context, father *cdp.Node, cssSelector 
 	}
 	var nodes []*cdp.Node
 	if stringutils.IsNotEmpty(scope) {
-		timeoutCtx, nodeCancel := context.WithTimeout(ctx, conf.Timeout)
-		defer nodeCancel()
+		timeoutCtx, cancel := context.WithTimeout(ctx, conf.Timeout)
+		defer cancel()
 		if father != nil {
 			if err := chromedp.Run(timeoutCtx, chromedp.Nodes(scope, &nodes, chromedp.ByQueryAll, chromedp.FromNode(father))); err != nil {
 				if r.conf.PanicOnScopeErr {
@@ -718,13 +718,15 @@ func (r RabidaImpl) populate(ctx context.Context, father *cdp.Node, cssSelector 
 		nodes = append(nodes, father)
 	}
 	var ret []interface{}
+	tCtx, cancel := context.WithTimeout(ctx, conf.Timeout*10)
+	defer cancel()
 	for _, node := range nodes {
 		if cssSelector.Attrs == nil {
-			err := doSomethingBefore(ctx, conf, cssSelector.Before, node)
+			timeoutCtx, attrCancel := context.WithTimeout(tCtx, conf.Timeout)
+			err := doSomethingBefore(timeoutCtx, conf, cssSelector.Before, node)
 			if err != nil {
 				panic(err)
 			}
-			timeoutCtx, attrCancel := context.WithTimeout(ctx, conf.Timeout)
 			var value interface{}
 			if stringutils.IsEmpty(cssSelector.Attr) {
 				if stringutils.IsEmpty(cssSelector.Css) {
@@ -879,9 +881,6 @@ func (r RabidaImpl) extract(ctx context.Context, job Job, pageNo int, conf confi
 	DelaySleep(conf, "populate")
 
 	p := r.paginator(job, pageNo)
-	var cancel context.CancelFunc
-	ctx, cancel = context.WithTimeout(ctx, conf.Timeout)
-	defer cancel()
 	if stringutils.IsNotEmpty(job.CssSelector.XpathScope) || stringutils.IsNotEmpty(job.CssSelector.Xpath) {
 		doc := r.Html(ctx, father, conf)
 		ret = r.populateX(ctx, job.CssSelector, conf, doc)

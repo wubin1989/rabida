@@ -37,8 +37,9 @@ type RabiConfig struct {
 	// ScrollTop refer to window.scrollTo parameters
 	ScrollTop string `split_words:"true" json:"scrollTop" default:"800"`
 	// ScrollLeft refer to window.scrollTo parameters
-	ScrollLeft      string `split_words:"true" json:"scrollLeft" default:"0"`
-	PanicOnScopeErr bool   `split_words:"true" json:"panicOnScopeErr"`
+	ScrollLeft        string `split_words:"true" json:"scrollLeft" default:"0"`
+	PanicOnScopeErr   bool   `split_words:"true" json:"panicOnScopeErr"`
+	TimeoutMultiplier int64  `split_words:"true" json:"timeoutMultiplier"`
 }
 
 func LoadFromEnv() *RabiConfig {

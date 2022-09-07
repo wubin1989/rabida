@@ -718,7 +718,7 @@ func (r RabidaImpl) populate(ctx context.Context, father *cdp.Node, cssSelector 
 		nodes = append(nodes, father)
 	}
 	var ret []interface{}
-	tCtx, cancel := context.WithTimeout(ctx, conf.Timeout*10)
+	tCtx, cancel := context.WithTimeout(ctx, conf.Timeout*time.Duration(conf.TimeoutMultiplier))
 	defer cancel()
 	for _, node := range nodes {
 		if cssSelector.Attrs == nil {
